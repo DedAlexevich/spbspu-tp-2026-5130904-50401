@@ -19,10 +19,6 @@ namespace kuznetsov {
     std::vector< char > expected;
   };
 
-  struct LabelIO {
-    std::string expected;
-  };
-
   struct StringIO {
     std::string& ref;
   };
@@ -45,12 +41,17 @@ namespace kuznetsov {
     std::string key3;
   };
 
+  struct KeyValueInput {
+    std::string key;
+    std::vector< bool >& been;
+    DataStruct& ds;
+  };
+
+  std::istream& operator>>(std::istream& in, KeyValueInput inp);
   std::istream& operator>>(std::istream& in, UllIO&& dest);
   std::istream& operator>>(std::istream& in, CmpLsp&& dest);
   std::istream& operator>>(std::istream& in, DelimiterIO&& dest);
   std::istream& operator>>(std::istream& in, StringIO&& dest);
-  std::istream& operator>>(std::istream& in, LabelIO&& dest);
-  std::istream& operator>>(std::istream& in, IOGuard&& dest);
   std::istream& operator>>(std::istream& in, DataStruct& dest);
   std::ostream& operator<<(std::ostream& out, const DataStruct& dest);
   std::ostream& operator<<(std::ostream& out, const CmpLsp& dest);
@@ -185,5 +186,56 @@ std::istream& kuznetsov::operator>>(std::istream& in, StringIO&& dest)
   return std::getline(in >> d_t{ {'"'} }, dest.ref, '"');
 }
 
+std::istream& kuznetsov::operator>>(std::istream& in, DataStruct& dest)
+{
+  std::istream::sentry s(in);
+  if (!s) {
+    return in;
+  }
+  IOGuard g(in);
+  std::string key1, key2, key3;
+  std::vector< bool > beens(3);
+  using d_t = DelimiterIO;
+  in >> d_t{{'('}} >> d_t{{':'}};
+  in >> key1 >> KeyValueInput{key1, beens, dest} >> d_t{{':'}};
+}
+
+std::istream& kuznetsov::operator>>(std::istream& in, KeyValueInput inp)
+{
+  std::istream::sentry s(in);
+  if (!s) {
+    return in;
+  }
+  IOGuard g(in);
+  switch (inp.key[3]) {
+  case '1':
+    if (!inp.been[0]) {
+      in >> inp.ds.key1;
+      inp.been[0] = true;
+    } else {
+      in.setstate(std::ios_base::failbit);
+    }
+    break;
+  case '2':
+    if (!inp.been[1]) {
+      in >> inp.ds.key2;
+      inp.been[1] = true;
+    } else {
+      in.setstate(std::ios_base::failbit);
+    }
+    break;
+  case '3':
+    if (!inp.been[2]) {
+      in >> inp.ds.key3;
+      inp.been[2] = true;
+    } else {
+      in.setstate(std::ios_base::failbit);
+    }
+    break;
+  default:
+    in.setstate(std::ios_base::failbit);
+  }
+  return in;
+}
 
 
