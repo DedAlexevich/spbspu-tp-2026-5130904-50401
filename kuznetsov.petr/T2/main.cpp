@@ -58,7 +58,21 @@ int main()
     using osi_t = std::ostream_iterator< kuz::DataStruct >;
     std::copy(data.begin(), data.end(), osi_t{std::cout, "\n"});
   }
-
 }
 
+kuznetsov::IOGuard::IOGuard(std::basic_ios< char >& s):
+  s_(s),
+  width_(s.width()),
+  fill_(s.fill()),
+  precision_(s.precision()),
+  fmt_(s.flags())
+{}
+
+kuznetsov::IOGuard::~IOGuard()
+{
+  s_.width(width_);
+  s_.precision(precision_);
+  s_.fill(fill_);
+  s_.flags(fmt_);
+}
 
