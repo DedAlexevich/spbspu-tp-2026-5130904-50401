@@ -14,7 +14,11 @@ namespace kuznetsov {
   };
 
   struct CmpLsp {
-    std::complex< double > ref;
+    std::complex< double >& ref;
+  };
+
+  struct ConstCmpLsp {
+    const std::complex<double>& ref;
   };
 
   struct DelimiterIO {
@@ -56,7 +60,7 @@ namespace kuznetsov {
   std::istream& operator>>(std::istream& in, StringIO&& dest);
   std::istream& operator>>(std::istream& in, DataStruct& dest);
   std::ostream& operator<<(std::ostream& out, const DataStruct& dest);
-  std::ostream& operator<<(std::ostream& out, const CmpLsp& dest);
+  std::ostream& operator<<(std::ostream& out, const ConstCmpLsp& dest);
   bool operator<(const DataStruct& lhs, const DataStruct& rhs);
 }
 
@@ -116,12 +120,12 @@ std::ostream& kuznetsov::operator<<(std::ostream& out, const DataStruct& dest)
   }
   IOGuard g(out);
   out << "(:key1 " << dest.key1 << "ull:";
-  out << "key2 " << CmpLsp{dest.key2} << ":";
+  out << "key2 " << ConstCmpLsp{dest.key2} << ":";
   out << "key3 \"" << dest.key3 << "\":)";
   return out;
 }
 
-std::ostream& kuznetsov::operator<<(std::ostream& out, const CmpLsp& dest)
+std::ostream& kuznetsov::operator<<(std::ostream& out, const ConstCmpLsp& dest)
 {
   std::ostream::sentry s(out);
   if (!s) {
@@ -200,6 +204,9 @@ std::istream& kuznetsov::operator>>(std::istream& in, DataStruct& dest)
   using d_t = DelimiterIO;
   in >> d_t{{'('}} >> d_t{{':'}};
   in >> key1 >> KeyValueInput{key1, beens, dest} >> d_t{{':'}};
+  in >> key2 >> KeyValueInput{key2, beens, dest} >> d_t{{':'}};
+  in >> key3 >> KeyValueInput{key3, beens, dest} >> d_t{{':'}};
+  in >> d_t{{')'}};
   return in;
 }
 
@@ -213,7 +220,7 @@ std::istream& kuznetsov::operator>>(std::istream& in, KeyValueInput inp)
   switch (inp.key[3]) {
   case '1':
     if (!inp.been[0]) {
-      in >> inp.ds.key1;
+      in >> UllIO{inp.ds.key1};
       inp.been[0] = true;
     } else {
       in.setstate(std::ios_base::failbit);
@@ -221,7 +228,7 @@ std::istream& kuznetsov::operator>>(std::istream& in, KeyValueInput inp)
     break;
   case '2':
     if (!inp.been[1]) {
-      in >> inp.ds.key2;
+      in >> CmpLsp{inp.ds.key2};
       inp.been[1] = true;
     } else {
       in.setstate(std::ios_base::failbit);
@@ -229,7 +236,7 @@ std::istream& kuznetsov::operator>>(std::istream& in, KeyValueInput inp)
     break;
   case '3':
     if (!inp.been[2]) {
-      in >> inp.ds.key3;
+      in >> StringIO{inp.ds.key3};
       inp.been[2] = true;
     } else {
       in.setstate(std::ios_base::failbit);
