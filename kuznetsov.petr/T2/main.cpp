@@ -159,4 +159,31 @@ std::istream& kuznetsov::operator>>(std::istream& in, UllIO&& dest)
   return in;
 }
 
+std::istream& kuznetsov::operator>>(std::istream& in, CmpLsp&& dest)
+{
+  std::istream::sentry s(in);
+  if (!s) {
+    return in;
+  }
+  IOGuard g(in);
+  using d_t = DelimiterIO;
+  double a = 0, b = 0;
+  in >> d_t{{'#'}} >> d_t{{'c'}};
+  in >> d_t{{'('}} >> a >> b >> d_t{{')'}};
+  dest.ref = {a, b};
+  return in;
+}
+
+std::istream& kuznetsov::operator>>(std::istream& in, StringIO&& dest)
+{
+  std::istream::sentry s(in);
+  if (!s) {
+    return in;
+  }
+  IOGuard g(in);
+  using d_t = DelimiterIO;
+  return std::getline(in >> d_t{ {'"'} }, dest.ref, '"');
+}
+
+
 
