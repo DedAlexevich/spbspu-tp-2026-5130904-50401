@@ -76,3 +76,15 @@ kuznetsov::IOGuard::~IOGuard()
   s_.flags(fmt_);
 }
 
+bool kuznetsov::operator<(const DataStruct& lhs, const DataStruct& rhs)
+{
+  bool f = lhs.key1 < rhs.key1;
+  if (!f) {
+    double cmp1 = std::sqrt(std::pow(lhs.key2.real(), 2) + std::pow(lhs.key2.imag(), 2));
+    double cmp2 = std::sqrt(std::pow(rhs.key2.real(), 2) + std::pow(rhs.key2.imag(), 2));
+    f = f || cmp1 < cmp2;
+  }
+  f = f || lhs.key3.length() < rhs.key3.length();
+  return f;
+}
+
