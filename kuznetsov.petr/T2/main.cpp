@@ -75,7 +75,7 @@ int main()
       if (std::cin.fail()) {
         std::cin.clear();
         std::streamsize max = std::numeric_limits< std::streamsize >::max();
-        std::cin.ignore(max);
+        std::cin.ignore(max, '\n');
       }
     }
   }
