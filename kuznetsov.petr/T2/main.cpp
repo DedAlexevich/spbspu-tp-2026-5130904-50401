@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iterator>
+#include <vector>
 #include <algorithm>
 #include <complex>
 #include <iomanip>
@@ -83,9 +84,9 @@ int main()
 kuznetsov::IOGuard::IOGuard(std::basic_ios< char >& s):
   s_(s),
   width_(s.width()),
-  fill_(s.fill()),
   precision_(s.precision()),
-  fmt_(s.flags())
+  fmt_(s.flags()),
+  fill_(s.fill())
 {}
 
 kuznetsov::IOGuard::~IOGuard()
@@ -198,6 +199,7 @@ std::istream& kuznetsov::operator>>(std::istream& in, DataStruct& dest)
   using d_t = DelimiterIO;
   in >> d_t{{'('}} >> d_t{{':'}};
   in >> key1 >> KeyValueInput{key1, beens, dest} >> d_t{{':'}};
+  return in;
 }
 
 std::istream& kuznetsov::operator>>(std::istream& in, KeyValueInput inp)
