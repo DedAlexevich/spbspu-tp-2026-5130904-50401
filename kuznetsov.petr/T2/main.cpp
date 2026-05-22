@@ -15,8 +15,16 @@ namespace kuznetsov {
     std::complex< double > ref;
   };
 
-  struct delimiter_t {
-    char expected;
+  struct DelimiterIO {
+    std::vector< char > expected;
+  };
+
+  struct LabelIO {
+    std::string expected;
+  };
+
+  struct StringIO {
+    std::string& ref;
   };
 
   class IOGuard {
@@ -39,7 +47,9 @@ namespace kuznetsov {
 
   std::istream& operator>>(std::istream& in, UllIO&& dest);
   std::istream& operator>>(std::istream& in, CmpLsp&& dest);
-  std::istream& operator>>(std::istream& in, delimiter_t&& dest);
+  std::istream& operator>>(std::istream& in, DelimiterIO&& dest);
+  std::istream& operator>>(std::istream& in, StringIO&& dest);
+  std::istream& operator>>(std::istream& in, LabelIO&& dest);
   std::istream& operator>>(std::istream& in, IOGuard&& dest);
   std::istream& operator>>(std::istream& in, DataStruct& dest);
   std::ostream& operator<<(std::ostream& out, const DataStruct& dest);
@@ -52,8 +62,15 @@ int main()
   namespace kuz = kuznetsov;
   std::vector< kuz::DataStruct > data;
   {
-    using isi_t = std::istream_iterator< kuz::DataStruct >;
-    std::copy(isi_t{std::cin}, isi_t{}, std::back_inserter(data));
+    while (!std::cin.eof()) {
+      using isi_t = std::istream_iterator< kuz::DataStruct >;
+      std::copy(isi_t{std::cin}, isi_t{}, std::back_inserter(data));
+      if (std::cin.fail()) {
+        std::cin.clear();
+        std::streamsize max = std::numeric_limits< std::streamsize >::max();
+        std::cin.ignore(max);
+      }
+    }
   }
   std::sort(data.begin(), data.end(), std::less < kuz::DataStruct >{});
   {
@@ -112,4 +129,34 @@ std::ostream& kuznetsov::operator<<(std::ostream& out, const CmpLsp& dest)
   out << std::fixed << std::setprecision(1) << dest.ref.real() << ' ' << dest.ref.imag() << ')';
   return out;
 }
+
+std::istream& kuznetsov::operator>>(std::istream& in, DelimiterIO&& dest)
+{
+  std::istream::sentry s(in);
+  if (!s) {
+    return in;
+  }
+  IOGuard g(in);
+  char c = 0;
+  in >> c;
+  if (std::find(dest.expected.cbegin(), dest.expected.cend(), c) == dest.expected.cend()) {
+    in.setstate(std::ios_base::failbit);
+  }
+  return in;
+}
+
+std::istream& kuznetsov::operator>>(std::istream& in, UllIO&& dest)
+{
+  std::istream::sentry s(in);
+  if (!s) {
+    return in;
+  }
+  IOGuard g(in);
+  ull_t t = 0;
+  using d_t = DelimiterIO;
+  in >> t >> d_t{{'U', 'u'}} >> d_t{{'L', 'l'}} >> d_t{{'L', 'l'}};
+  dest.ref = t;
+  return in;
+}
+
 
