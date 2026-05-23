@@ -1,5 +1,6 @@
 #include "input.hpp"
 #include <iostream>
+#include <vector>
 #include <iomanip>
 kuznetsov::IOGuard::IOGuard(std::basic_ios< char >& s):
   s_(s),
