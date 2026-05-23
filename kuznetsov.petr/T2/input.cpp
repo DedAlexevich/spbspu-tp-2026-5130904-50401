@@ -1,6 +1,8 @@
 #include "input.hpp"
 #include <iostream>
+#include <algorithm>
 #include <iomanip>
+
 kuznetsov::IOGuard::IOGuard(std::basic_ios< char >& s):
   s_(s),
   width_(s.width()),
