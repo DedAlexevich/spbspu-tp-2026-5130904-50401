@@ -2,6 +2,7 @@
 #define SPBSPU_TP_2026_5130904_50401_INPUT_H
 #include <complex>
 #include <iosfwd>
+#include <vector>
 namespace kuznetsov {
   using ull_t = unsigned long long;
 
