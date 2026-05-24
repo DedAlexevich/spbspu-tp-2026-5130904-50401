@@ -9,14 +9,14 @@ int main()
   namespace kuz = kuznetsov;
   using command = void(*)(std::istream&, std::ostream&, kuz::notepad_t&);
   using constCommand = void(*)(std::istream&, std::ostream&, const kuz::notepad_t&);
-  std::unordered_map< std::string, command> cmds;
+  std::unordered_map< std::string, command > cmds;
   cmds["note"] = kuz::addNote;
   cmds["line"] = kuz::addLine;
   cmds["drop"] = kuz::drop;
   cmds["link"] = kuz::linkNotes;
   cmds["halt"] = kuz::removeLink;
   cmds["refresh"] = kuz::removeRemovedLinks;
-  std::unordered_map< std::string, constCommand> constCmds;
+  std::unordered_map< std::string, constCommand > constCmds;
   constCmds["show"] = kuz::show;
   constCmds["mind"] = kuz::showLinks;
   constCmds["expired"] = kuz::getCountRemovedNotes;
@@ -37,3 +37,4 @@ int main()
   }
   return 0;
 }
+
