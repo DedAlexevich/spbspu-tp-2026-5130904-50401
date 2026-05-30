@@ -107,10 +107,11 @@ std::ostream& kuznetsov::operator<<(std::ostream& out, const Polygon& dest)
     return out;
   }
   IOGuard g(out);
-  out << dest.points.size();
-  for (size_t i = 0; i < dest.points.size(); ++i) {
-    out << ' ' << '(' << dest.points[i].x << ';' << dest.points[i].y << ')';
-  }
+  size_t c = dest.points.size();
+  out << c << ' ';
+  using osi_t = std::ostream_iterator< detail::Point >;
+  std::copy_n(dest.points.begin(), c - 1, osi_t{out, " "});
+  out << dest.points[c - 1];
   return out;
 }
 
