@@ -8,6 +8,8 @@ namespace kuznetsov {
     struct Point {
       int x, y;
     };
+    std::istream& operator>>(std::istream& in, detail::Point& dest);
+    std::ostream& operator<<(std::ostream& out, const detail::Point& dest);
   }
 
   struct Polygon {

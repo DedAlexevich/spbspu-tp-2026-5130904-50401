@@ -1,5 +1,7 @@
 #include "polygon.hpp"
+#include <algorithm>
 #include <iostream>
+#include <iterator>
 
 class IOGuard {
 public:
@@ -48,7 +50,7 @@ std::istream& operator>>(std::istream& in, DelimiterIO&& dest)
   return in;
 }
 
-std::istream& kuznetsov::operator>>(std::istream& in, Polygon& dest)
+std::istream& kuznetsov::detail::operator>>(std::istream& in, detail::Point& dest)
 {
   std::istream::sentry s(in);
   if (!s) {
@@ -56,18 +58,45 @@ std::istream& kuznetsov::operator>>(std::istream& in, Polygon& dest)
   }
   IOGuard g(in);
   using d_t = DelimiterIO;
-  size_t count = 0;
-  int x = 0, y = 0;
-  in >> count;
-  std::vector< detail::Point > temp(count);
-  for (size_t i = 0; i < count; ++i) {
-    in >> d_t{'('} >> x >> d_t{';'} >> y >> d_t{')'};
-    if (!in) {
-      return in;
-    }
-    temp.push_back({x, y});
+  detail::Point temp{0, 0};
+  in >> d_t{'('} >> temp.x >> d_t{';'} >> temp.y >> d_t{')'};
+  if(in) {
+    dest = temp;
   }
-  dest.points = std::move(temp);
+  return in;
+}
+std::ostream& kuznetsov::detail::operator<<(std::ostream& out, const detail::Point& dest)
+{
+  std::ostream::sentry s(out);
+  if (!s) {
+    return out;
+  }
+  IOGuard g(out);
+  out << '(' << dest.x << ';' << dest.y << ')';
+  return out;
+}
+
+
+std::istream& kuznetsov::operator>>(std::istream& in, Polygon& dest)
+{
+  std::istream::sentry s(in);
+  if (!s) {
+    return in;
+  }
+  IOGuard g(in);
+  size_t count = 0;
+  in >> count;
+  if (count == 0) {
+    in.setstate(std::ios_base::failbit);
+    return in;
+  }
+  std::vector< detail::Point > temp;
+  temp.reserve(count);
+  using isi_t = std::istream_iterator< detail::Point >;
+  std::copy_n(isi_t{in}, count, std::back_inserter(temp));
+  if (in && temp.size() == count) {
+    dest.points = std::move(temp);
+  }
   return in;
 }
 
