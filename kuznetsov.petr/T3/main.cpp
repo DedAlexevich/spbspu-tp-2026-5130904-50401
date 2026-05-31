@@ -1,12 +1,16 @@
 #include <iostream>
+#include <ostream>
+#include <unordered_map>
 #include <vector>
 #include <iterator>
 #include <algorithm>
 #include <fstream>
 #include "polygon.hpp"
+#include "commands.hpp"
 
 namespace kuznetsov {
   bool isNotEmpty(Polygon& p);
+  void runExecute(std::istream&, CommandExecuter&);
 }
 
 int main(int argc, char** argv)
@@ -30,9 +34,15 @@ int main(int argc, char** argv)
   std::vector< kuz::Polygon > data;
   std::copy_if(raw.begin(), raw.end(), std::back_inserter(data), kuz::isNotEmpty);
   raw.clear();
-
-  using osi_t = std::ostream_iterator< kuz::Polygon >;
-  std::copy(data.begin(), data.end(), osi_t{std::cout, "\n"});
+  std::unordered_map< std::string, kuz::cmd_t > cmds;
+  cmds["AREA"] = kuz::area;
+  cmds["MAX"] = kuz::max;
+  cmds["MIN"] = kuz::min;
+  cmds["COUNT"] = kuz::count;
+  cmds["SAME"] = kuz::same;
+  cmds["RECTS"] = kuz::rects;
+  kuz::CommandExecuter ce{cmds, std::cout, data};
+  kuz::runExecute(std::cin, ce);
 }
 
 bool kuznetsov::isNotEmpty(Polygon& p)
@@ -40,5 +50,12 @@ bool kuznetsov::isNotEmpty(Polygon& p)
   return p.points.size();
 }
 
+void kuznetsov::runExecute(std::istream& in, CommandExecuter& ce)
+{
+  if (!(in >> ce)) {
+    return;
+  }
+  runExecute(in, ce);
+}
 
 
