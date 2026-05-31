@@ -98,5 +98,28 @@ void kuznetsov::area(std::istream& in, std::ostream& out, std::vector< Polygon >
   out.flags(fmt);
 }
 
+void kuznetsov::max(std::istream& in, std::ostream& out, std::vector< Polygon >& ps)
+{
+  std::string param;
+  in >> param;
+  using std::placeholders::_1;
+  std::ios_base::fmtflags fmt = out.flags();
+  out << std::fixed << std::setprecision(1);
+  if (ps.empty()) {
 
+    throw std::logic_error("Empty polygons");
+  }
+  if (param == "AREA") {
+    std::vector< double > areas;
+    std::transform(ps.begin(), ps.end(), std::back_inserter(areas), getArea);
+    out << *(std::max_element(areas.begin(), areas.end())) << '\n';
+  } else {
+    std::vector< size_t > vrts;
+    auto getSize = std::bind(&std::vector< detail::Point >::size,
+        std::bind(&kuznetsov::Polygon::points, _1));
+    std::transform(ps.begin(), ps.end(), std::back_inserter(vrts), getSize);
+    size_t res = *(std::max_element(vrts.begin(), vrts.end()));
+    out << res << '\n';
+  }
+}
 
