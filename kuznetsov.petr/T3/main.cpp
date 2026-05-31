@@ -2,14 +2,11 @@
 #include <ostream>
 #include <unordered_map>
 #include <vector>
-#include <iterator>
-#include <algorithm>
 #include <fstream>
 #include "polygon.hpp"
 #include "commands.hpp"
 
 namespace kuznetsov {
-  bool isNotEmpty(Polygon& p);
   void runExecute(std::istream&, CommandExecuter&);
 }
 
@@ -39,11 +36,6 @@ int main(int argc, char** argv)
   cmds["RECTS"] = kuz::rects;
   kuz::CommandExecuter ce{cmds, std::cout, data};
   kuz::runExecute(std::cin, ce);
-}
-
-bool kuznetsov::isNotEmpty(Polygon& p)
-{
-  return p.points.size();
 }
 
 void kuznetsov::runExecute(std::istream& in, CommandExecuter& ce)
