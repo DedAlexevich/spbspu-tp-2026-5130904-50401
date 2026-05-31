@@ -68,7 +68,7 @@ double sumAllArea(const std::vector< polygon_t >& data)
   return std::transform_reduce(data.begin(), data.end(), 0.0, plus{}, getArea);
 }
 
-void kuznetsov::area(std::istream& in, std::ostream& out, std::vector< Polygon >& ps)
+void kuznetsov::area(std::istream& in, std::ostream& out, const std::vector< Polygon >& ps)
 {
   std::string param;
   in >> param;
@@ -104,7 +104,7 @@ void kuznetsov::area(std::istream& in, std::ostream& out, std::vector< Polygon >
 }
 
 template< class CMP >
-void finder(std::istream& in, std::ostream& out, std::vector< polygon_t >& ps, CMP cmp)
+void finder(std::istream& in, std::ostream& out, const std::vector< polygon_t >& ps, CMP cmp)
 {
   std::string param;
   in >> param;
@@ -139,17 +139,17 @@ void finder(std::istream& in, std::ostream& out, std::vector< polygon_t >& ps, C
   out.flags(fmt);
 }
 
-void kuznetsov::max(std::istream& in, std::ostream& out, std::vector< Polygon >& ps)
+void kuznetsov::max(std::istream& in, std::ostream& out, const std::vector< Polygon >& ps)
 {
   finder(in, out, ps, std::less<>{});
 }
 
-void kuznetsov::min(std::istream& in, std::ostream& out, std::vector< Polygon >& ps)
+void kuznetsov::min(std::istream& in, std::ostream& out, const std::vector< Polygon >& ps)
 {
   finder(in, out, ps, std::greater<>{});
 }
 
-void kuznetsov::count(std::istream& in, std::ostream& out, std::vector< Polygon >& ps)
+void kuznetsov::count(std::istream& in, std::ostream& out, const std::vector< Polygon >& ps)
 {
   std::string param;
   in >> param;
@@ -202,7 +202,7 @@ bool sameShape(const std::vector< point_t >& target, const polygon_t& poly)
   return std::equal(target.begin(), target.end(), nb.begin(), pointEq);
 }
 
-void kuznetsov::same(std::istream& in, std::ostream& out, std::vector< Polygon >& p)
+void kuznetsov::same(std::istream& in, std::ostream& out, const std::vector< Polygon >& p)
 {
   polygon_t poly;
   in >> poly;
@@ -213,5 +213,31 @@ void kuznetsov::same(std::istream& in, std::ostream& out, std::vector< Polygon >
   using std::placeholders::_1;
   out << std::count_if(p.begin(), p.end(), std::bind(sameShape, std::cref(norm), _1)) << '\n';
 }
+
+long rectAngle(const point_t& a, const point_t& b, const point_t& c) {
+  long v1x = b.x - a.x;
+  long v1y = b.y - a.y;
+  long v2x = c.x - b.x;
+  long v2y = c.y - b.y;
+  return v1x * v2x + v1y * v2y;
+}
+
+bool isRect(const polygon_t& p) {
+  if (p.points.size() != 4) {
+    return false;
+  }
+  const std::vector< point_t >& v = p.points;
+  bool f = rectAngle(v[3], v[0], v[1]) == 0;
+  f = f && rectAngle(v[0], v[1], v[2]) == 0;
+  f = f && rectAngle(v[1], v[2], v[3]) == 0;
+  f = f && rectAngle(v[2], v[3], v[0]) == 0;
+  return f;
+}
+
+void kuznetsov::rects(std::istream&, std::ostream& out, const std::vector< Polygon >& ps) {
+  out << std::count_if(ps.begin(), ps.end(), isRect) << '\n';
+}
+
+
 
 
