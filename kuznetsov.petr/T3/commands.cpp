@@ -1,5 +1,6 @@
 #include "commands.hpp"
 #include <algorithm>
+#include <complex>
 #include <cstddef>
 #include <cstdlib>
 #include <functional>
@@ -75,6 +76,7 @@ void kuznetsov::area(std::istream& in, std::ostream& out, std::vector< Polygon >
 
   using std::placeholders::_1;
   std::ios_base::fmtflags fmt = out.flags();
+  std::streamsize precision = out.precision();
   out << std::fixed << std::setprecision(1);
 
   if (param == "EVEN") {
@@ -84,6 +86,7 @@ void kuznetsov::area(std::istream& in, std::ostream& out, std::vector< Polygon >
   } else if (param == "MEAN") {
     if (ps.empty()) {
       out.flags(fmt);
+      out.precision(precision);
       throw std::logic_error("Requared one polygon as minimum");
     }
     out << sumAllArea(ps) / ps.size() << '\n';
@@ -95,31 +98,53 @@ void kuznetsov::area(std::istream& in, std::ostream& out, std::vector< Polygon >
       out << sumAreaIf(ps, std::bind(hasNVertexes, n, _1)) << '\n';
     }
   }
+  out.precision(precision);
+  out.flags(fmt);
+}
+
+template< class CMP >
+void finder(std::istream& in, std::ostream& out, std::vector< polygon_t >& ps, CMP cmp)
+{
+  std::string param;
+  in >> param;
+  using std::placeholders::_1;
+  if (ps.empty()) {
+    throw std::logic_error("Empty polygons");
+  }
+  std::ios_base::fmtflags fmt = out.flags();
+  std::streamsize precision = out.precision();
+  out << std::fixed << std::setprecision(1);
+
+  if (param == "AREA") {
+    std::vector< double > areas;
+    std::transform(ps.begin(), ps.end(), std::back_inserter(areas), getArea);
+    out << *(max_element(areas.begin(), areas.end(), cmp)) << '\n';
+  } else if (param == "VERTEXES") {
+    std::vector< size_t > vrts;
+
+    auto getSize = std::bind(&std::vector< point_t >::size,
+        std::bind(&kuznetsov::Polygon::points, _1));
+
+    std::transform(ps.begin(), ps.end(), std::back_inserter(vrts), getSize);
+    size_t res = *(max_element(vrts.begin(), vrts.end(), cmp));
+    out << res << '\n';
+  } else {
+    out.precision(precision);
+    out.flags(fmt);
+    throw std::logic_error("Unknown argument");
+
+  }
+  out.precision(precision);
   out.flags(fmt);
 }
 
 void kuznetsov::max(std::istream& in, std::ostream& out, std::vector< Polygon >& ps)
 {
-  std::string param;
-  in >> param;
-  using std::placeholders::_1;
-  std::ios_base::fmtflags fmt = out.flags();
-  out << std::fixed << std::setprecision(1);
-  if (ps.empty()) {
+  finder(in, out, ps, std::less<>{});
+}
 
-    throw std::logic_error("Empty polygons");
-  }
-  if (param == "AREA") {
-    std::vector< double > areas;
-    std::transform(ps.begin(), ps.end(), std::back_inserter(areas), getArea);
-    out << *(std::max_element(areas.begin(), areas.end())) << '\n';
-  } else {
-    std::vector< size_t > vrts;
-    auto getSize = std::bind(&std::vector< detail::Point >::size,
-        std::bind(&kuznetsov::Polygon::points, _1));
-    std::transform(ps.begin(), ps.end(), std::back_inserter(vrts), getSize);
-    size_t res = *(std::max_element(vrts.begin(), vrts.end()));
-    out << res << '\n';
-  }
+void kuznetsov::min(std::istream& in, std::ostream& out, std::vector< Polygon >& ps)
+{
+  finder(in, out, ps, std::greater<>{});
 }
 
