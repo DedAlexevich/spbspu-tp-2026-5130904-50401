@@ -194,11 +194,21 @@ bool sameShape(const std::vector< point_t >& target, const polygon_t& poly)
   return std::equal(target.begin(), target.end(), nb.begin(), pointEq);
 }
 
+bool atLineEnd(std::istream& in)
+{
+  int ch = in.peek();
+  if (ch == ' ' || ch == '\t' || ch == '\r') {
+    in.get();
+    return atLineEnd(in);
+  }
+  return ch == '\n' || ch == EOF;
+}
+
 void kuznetsov::same(std::istream& in, std::ostream& out, const std::vector< Polygon >& p)
 {
   polygon_t poly;
   in >> poly;
-  if (!in || poly.points.size() < 3) {
+  if (!in || poly.points.size() < 3 || !atLineEnd(in)) {
     throw std::logic_error("Bad polygon");
   }
   std::vector< point_t > norm = normalize(poly);
