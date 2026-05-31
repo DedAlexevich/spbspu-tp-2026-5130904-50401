@@ -6,8 +6,10 @@
 #include <iomanip>
 #include <iostream>
 #include <iterator>
+#include <limits>
 #include <numeric>
 #include <vector>
+#include "input.hpp"
 #include "polygon.hpp"
 
 using polygon_t = kuznetsov::Polygon;
@@ -29,13 +31,13 @@ double getArea(const polygon_t& p)
   if (p.points.size() < 3) {
     return 0.0;
   }
-  using plus = std::plus< double >;
   using std::placeholders::_1;
-  using std::placeholders::_2;
   size_t triCount = p.points.size() - 2;
   std::vector< size_t > idx(triCount);
   std::iota(idx.begin(), idx.end(), 1);
-  double signedArea = std::transform_reduce(idx.begin(), idx.end(), 0.0, plus{}, std::bind(fanTriArea, std::cref(p), _1));
+  std::vector< double > areas(triCount);
+  std::transform(idx.begin(), idx.end(), std::back_inserter(areas), std::bind(fanTriArea, std::cref(p), _1));
+  double signedArea = std::accumulate(areas.begin(), areas.end(), 0.0);
   return std::abs(signedArea);
 }
 
@@ -56,16 +58,18 @@ bool hasNVertexes(size_t n, const polygon_t& p)
 
 double sumAreaIf(const std::vector< polygon_t >& data, std::function< bool(const polygon_t&) > pred)
 {
-  using plus = std::plus< double >;
   std::vector< polygon_t > approved;
   std::copy_if(data.begin(), data.end(), std::back_inserter(approved), pred);
-  return std::transform_reduce(approved.begin(), approved.end(), 0.0, plus{}, getArea);
+  std::vector< double > areas(approved.size());
+  std::transform(approved.begin(), approved.end(), areas.begin(), getArea);
+  return std::accumulate(areas.begin(), areas.end(), 0.0);
 }
 
 double sumAllArea(const std::vector< polygon_t >& data)
 {
-  using plus = std::plus< double >;
-  return std::transform_reduce(data.begin(), data.end(), 0.0, plus{}, getArea);
+  std::vector< double > areas(data.size());
+  std::transform(data.begin(), data.end(), areas.begin(), getArea);
+  return std::accumulate(areas.begin(), areas.end(), 0.0);
 }
 
 void kuznetsov::area(std::istream& in, std::ostream& out, const std::vector< Polygon >& ps)
@@ -74,8 +78,7 @@ void kuznetsov::area(std::istream& in, std::ostream& out, const std::vector< Pol
   in >> param;
 
   using std::placeholders::_1;
-  std::ios_base::fmtflags fmt = out.flags();
-  std::streamsize precision = out.precision();
+  IOGuard g(out);
   out << std::fixed << std::setprecision(1);
 
   if (param == "EVEN") {
@@ -84,23 +87,17 @@ void kuznetsov::area(std::istream& in, std::ostream& out, const std::vector< Pol
     out << sumAreaIf(ps, hasOddVertexes) << '\n';
   } else if (param == "MEAN") {
     if (ps.empty()) {
-      out.flags(fmt);
-      out.precision(precision);
       throw std::logic_error("Requared one polygon as minimum");
     }
     out << sumAllArea(ps) / ps.size() << '\n';
   } else {
     size_t n = std::stoul(param);
     if (n < 3) {
-      out.flags(fmt);
-      out.precision(precision);
       throw std::logic_error("Invalid argiment");
     } else {
       out << sumAreaIf(ps, std::bind(hasNVertexes, n, _1)) << '\n';
     }
   }
-  out.precision(precision);
-  out.flags(fmt);
 }
 
 template< class CMP >
@@ -112,8 +109,7 @@ void finder(std::istream& in, std::ostream& out, const std::vector< polygon_t >&
   if (ps.empty()) {
     throw std::logic_error("Empty polygons");
   }
-  std::ios_base::fmtflags fmt = out.flags();
-  std::streamsize precision = out.precision();
+  kuznetsov::IOGuard g(out);
   out << std::fixed << std::setprecision(1);
 
   if (param == "AREA") {
@@ -130,13 +126,9 @@ void finder(std::istream& in, std::ostream& out, const std::vector< polygon_t >&
     size_t res = *(max_element(vrts.begin(), vrts.end(), cmp));
     out << res << '\n';
   } else {
-    out.precision(precision);
-    out.flags(fmt);
     throw std::logic_error("Unknown argument");
 
   }
-  out.precision(precision);
-  out.flags(fmt);
 }
 
 void kuznetsov::max(std::istream& in, std::ostream& out, const std::vector< Polygon >& ps)
@@ -206,7 +198,7 @@ void kuznetsov::same(std::istream& in, std::ostream& out, const std::vector< Pol
 {
   polygon_t poly;
   in >> poly;
-  if (!in || poly.points.empty()) {
+  if (!in || poly.points.size() < 3) {
     throw std::logic_error("Bad polygon");
   }
   std::vector< point_t > norm = normalize(poly);
@@ -238,6 +230,29 @@ void kuznetsov::rects(std::istream&, std::ostream& out, const std::vector< Polyg
   out << std::count_if(ps.begin(), ps.end(), isRect) << '\n';
 }
 
+void clearIstream(std::istream& in)
+{
+  in.clear();
+  std::streamsize max = std::numeric_limits< std::streamsize >::max();
+  in.ignore(max, '\n');
+}
 
+std::istream& kuznetsov::operator>>(std::istream& in, CommandExecuter& cmd)
+{
+  std::istream::sentry s(in);
+  if(!s) {
+    return in;
+  }
+  IOGuard g(in);
+  std::string cm;
+  in >> cm;
+  try {
+    cmd.cmds.at(cm)(in, cmd.out, cmd.ps);
+  } catch(...) {
+    cmd.out << "<INVALID COMMAND>\n";
+    clearIstream(in);
+  }
+  return in;
+}
 
 
