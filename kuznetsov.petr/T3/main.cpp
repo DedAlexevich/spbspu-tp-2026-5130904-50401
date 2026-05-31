@@ -27,13 +27,9 @@ int main(int argc, char** argv)
   }
 
   namespace kuz = kuznetsov;
-  std::vector< kuz::Polygon > raw;
-  using isi_t = std::istream_iterator< kuz::Polygon >;
-  std::copy(isi_t{file}, isi_t{}, std::back_inserter(raw));
-
   std::vector< kuz::Polygon > data;
-  std::copy_if(raw.begin(), raw.end(), std::back_inserter(data), kuz::isNotEmpty);
-  raw.clear();
+  kuz::readPoly(file, data);
+
   std::unordered_map< std::string, kuz::cmd_t > cmds;
   cmds["AREA"] = kuz::area;
   cmds["MAX"] = kuz::max;

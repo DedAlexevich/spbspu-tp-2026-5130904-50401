@@ -15,7 +15,7 @@ namespace kuznetsov {
   struct Polygon {
     std::vector< detail::Point > points;
   };
-
+  void readPoly(std::istream& in, std::vector< Polygon >& dst);
   std::istream& operator>>(std::istream& in, Polygon& dest);
   std::ostream& operator<<(std::ostream& out, const Polygon& dest);
 

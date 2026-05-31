@@ -3,9 +3,11 @@
 #include <iostream>
 #include <iterator>
 #include <limits>
+
+#include "commands.hpp"
 #include "input.hpp"
 
-std::istream& kuznetsov::detail::operator>>(std::istream& in, detail::Point& dest)
+std::istream& kuznetsov::detail::operator>>(std::istream& in, Point& dest)
 {
   std::istream::sentry s(in);
   if (!s) {
@@ -20,7 +22,7 @@ std::istream& kuznetsov::detail::operator>>(std::istream& in, detail::Point& des
   }
   return in;
 }
-std::ostream& kuznetsov::detail::operator<<(std::ostream& out, const detail::Point& dest)
+std::ostream& kuznetsov::detail::operator<<(std::ostream& out, const Point& dest)
 {
   std::ostream::sentry s(out);
   if (!s) {
@@ -48,8 +50,9 @@ std::istream& kuznetsov::operator>>(std::istream& in, Polygon& dest)
   IOGuard g(in);
   size_t count = 0;
   in >> count;
-  if (!in || count == 0) {
-    clearIstream(in, dest);
+  if (!in || count < 3) {
+    in.setstate(std::ios_base::failbit);
+    dest.points.clear();
     return in;
   }
   std::vector< detail::Point > temp;
@@ -59,7 +62,8 @@ std::istream& kuznetsov::operator>>(std::istream& in, Polygon& dest)
   if (in && temp.size() == count) {
     dest.points = std::move(temp);
   } else {
-    clearIstream(in, dest);
+    in.setstate(std::ios_base::failbit);
+    dest.points.clear();
   }
   return in;
 }
@@ -77,6 +81,24 @@ std::ostream& kuznetsov::operator<<(std::ostream& out, const Polygon& dest)
   std::copy_n(dest.points.begin(), c - 1, osi_t{out, " "});
   out << dest.points[c - 1];
   return out;
+}
+
+void kuznetsov::readPoly(std::istream& in, polygons_t& dst)
+{
+  Polygon p;
+  in >> p;
+  if (in.eof() && p.points.empty()) {
+    return;
+  }
+  if (in.fail()) {
+    in.clear();
+    in.ignore(std::numeric_limits< std::streamsize >::max(), '\n');
+  } else if (!p.points.empty()) {
+    dst.push_back(p);
+  }
+  if (!in.eof()) {
+    readPoly(in, dst);
+  }
 }
 
 
