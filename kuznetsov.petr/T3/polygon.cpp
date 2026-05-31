@@ -3,53 +3,7 @@
 #include <iostream>
 #include <iterator>
 #include <limits>
-
-class IOGuard {
-public:
-  explicit IOGuard(std::basic_ios< char >& s);
-  ~IOGuard();
-private:
-  std::basic_ios< char >& s_;
-  std::streamsize width_;
-  std::streamsize precision_;
-  std::basic_ios< char >::fmtflags fmt_;
-  char fill_;
-};
-
-IOGuard::IOGuard(std::basic_ios< char >& s):
-  s_(s),
-  width_(s.width()),
-  precision_(s.precision()),
-  fmt_(s.flags()),
-  fill_(s.fill())
-{}
-
-IOGuard::~IOGuard()
-{
-  s_.width(width_);
-  s_.precision(precision_);
-  s_.fill(fill_);
-  s_.flags(fmt_);
-
-}
-struct DelimiterIO {
-  char expected;
-};
-
-std::istream& operator>>(std::istream& in, DelimiterIO&& dest)
-{
-  std::istream::sentry s(in);
-  if (!s) {
-    return in;
-  }
-  IOGuard g(in);
-  char c = 0;
-  in >> c;
-  if (c != dest.expected) {
-    in.setstate(std::ios_base::failbit);
-  }
-  return in;
-}
+#include "input.hpp"
 
 std::istream& kuznetsov::detail::operator>>(std::istream& in, detail::Point& dest)
 {
