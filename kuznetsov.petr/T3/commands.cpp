@@ -93,7 +93,9 @@ void kuznetsov::area(std::istream& in, std::ostream& out, std::vector< Polygon >
   } else {
     size_t n = std::stoul(param);
     if (n < 3) {
-      out << 0.0 << '\n';
+      out.flags(fmt);
+      out.precision(precision);
+      throw std::logic_error("Invalid argiment");
     } else {
       out << sumAreaIf(ps, std::bind(hasNVertexes, n, _1)) << '\n';
     }
@@ -146,5 +148,24 @@ void kuznetsov::max(std::istream& in, std::ostream& out, std::vector< Polygon >&
 void kuznetsov::min(std::istream& in, std::ostream& out, std::vector< Polygon >& ps)
 {
   finder(in, out, ps, std::greater<>{});
+}
+
+void kuznetsov::count(std::istream& in, std::ostream& out, std::vector< Polygon >& ps)
+{
+  std::string param;
+  in >> param;
+  using std::placeholders::_1;
+
+  if (param == "EVEN") {
+    out << std::count_if(ps.begin(), ps.end(), hasEvenVertexes) << '\n';
+  } else if (param == "ODD") {
+    out << std::count_if(ps.begin(), ps.end(), hasOddVertexes) << '\n';
+  } else {
+    size_t n = std::stoul(param);
+    if (n < 3) {
+      throw std::logic_error("Invalid argument");
+    }
+    out << std::count_if(ps.begin(), ps.end(), std::bind(hasNVertexes, n, _1)) << '\n';
+  }
 }
 
