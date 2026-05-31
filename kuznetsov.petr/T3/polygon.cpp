@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <iostream>
 #include <iterator>
+#include <limits>
 
 class IOGuard {
 public:
@@ -76,6 +77,13 @@ std::ostream& kuznetsov::detail::operator<<(std::ostream& out, const detail::Poi
   return out;
 }
 
+void clearIstream(std::istream& in, kuznetsov::Polygon& p)
+{
+  in.clear();
+  std::streamsize max = std::numeric_limits< std::streamsize >::max();
+  in.ignore(max, '\n');
+  p.points.clear();
+}
 
 std::istream& kuznetsov::operator>>(std::istream& in, Polygon& dest)
 {
@@ -86,8 +94,8 @@ std::istream& kuznetsov::operator>>(std::istream& in, Polygon& dest)
   IOGuard g(in);
   size_t count = 0;
   in >> count;
-  if (count == 0) {
-    in.setstate(std::ios_base::failbit);
+  if (!in || count == 0) {
+    clearIstream(in, dest);
     return in;
   }
   std::vector< detail::Point > temp;
@@ -96,6 +104,8 @@ std::istream& kuznetsov::operator>>(std::istream& in, Polygon& dest)
   std::copy_n(isi_t{in}, count, std::back_inserter(temp));
   if (in && temp.size() == count) {
     dest.points = std::move(temp);
+  } else {
+    clearIstream(in, dest);
   }
   return in;
 }
