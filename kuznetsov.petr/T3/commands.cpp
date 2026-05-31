@@ -1,6 +1,5 @@
 #include "commands.hpp"
 #include <algorithm>
-#include <complex>
 #include <cstddef>
 #include <cstdlib>
 #include <functional>
@@ -168,4 +167,51 @@ void kuznetsov::count(std::istream& in, std::ostream& out, std::vector< Polygon 
     out << std::count_if(ps.begin(), ps.end(), std::bind(hasNVertexes, n, _1)) << '\n';
   }
 }
+
+bool pointLess(const point_t& a, const point_t& b)
+{
+  return a.x != b.x ? a.x < b.x : a.y < b.y;
+}
+
+point_t subPoint(const point_t& base, const point_t& p)
+{
+  return point_t{p.x - base.x, p.y - base.y};
+}
+
+bool pointEq(const point_t& a, const point_t& b)
+{
+  return a.x == b.x && a.y == b.y;
+}
+
+std::vector< point_t > normalize(const polygon_t& poly)
+{
+  std::vector< point_t > v = poly.points;
+  point_t base = *std::min_element(v.begin(), v.end(), pointLess);
+  using std::placeholders::_1;
+  std::transform(v.begin(), v.end(), v.begin(), std::bind(subPoint, std::cref(base), _1));
+  std::sort(v.begin(), v.end(), pointLess);
+  return v;
+}
+
+bool sameShape(const std::vector< point_t >& target, const polygon_t& poly)
+{
+  if (target.size() != poly.points.size()) {
+    return false;
+  }
+  std::vector< point_t > nb = normalize(poly);
+  return std::equal(target.begin(), target.end(), nb.begin(), pointEq);
+}
+
+void kuznetsov::same(std::istream& in, std::ostream& out, std::vector< Polygon >& p)
+{
+  polygon_t poly;
+  in >> poly;
+  if (!in || poly.points.empty()) {
+    throw std::logic_error("Bad polygon");
+  }
+  std::vector< point_t > norm = normalize(poly);
+  using std::placeholders::_1;
+  out << std::count_if(p.begin(), p.end(), std::bind(sameShape, std::cref(norm), _1)) << '\n';
+}
+
 
